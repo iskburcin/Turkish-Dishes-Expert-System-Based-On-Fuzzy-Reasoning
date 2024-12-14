@@ -113,10 +113,25 @@ class DishEvaluator(QMainWindow):
         layout.addRow(self.add_button)
         self.tab_add.setLayout(layout)
 
+    # def setup_check_tab(self):
+    #     layout = QVBoxLayout()
+
+    #     self.custom_button = QPushButton("Custom Dish Check")
+    #     self.savedDish_button = QPushButton("Saved in DB Dish Check")
+    #     self.custom_button.clicked.connect(self.setup_custom_check_tab)
+    #     self.savedDish_button.clicked.connect(self.setup_custom_check_tab)
+
+    def setup_savedDish_check_tab(self):
+        layout = QVBoxLayout()
+
     def setup_check_tab(self):
         layout = QFormLayout()
 
         # Input fields for all four characteristics
+        self.custom_button = QPushButton("Custom Dish Check")
+        self.savedDish_button = QPushButton("Saved in DB Dish Check")
+        self.custom_button.clicked.connect(self.setup_check_tab)
+        self.savedDish_button.clicked.connect(self.setup_savedDish_check_tab)
         self.check_taste = QLineEdit()
         self.check_spiciness = QLineEdit()
         self.check_sweetness = QLineEdit()
@@ -138,6 +153,7 @@ class DishEvaluator(QMainWindow):
         self.check_button.clicked.connect(self.check_suitability)
 
         # Add widgets to layout
+        layout.addRow(self.custom_button, self.savedDish_button)
         layout.addRow("Taste (0-20):", self.check_taste)
         layout.addRow("Spiciness (0-10):", self.check_spiciness)
         layout.addRow("Sweetness (0-10):", self.check_sweetness)
@@ -186,7 +202,7 @@ class DishEvaluator(QMainWindow):
             )
 
     def check_suitability(self):
-        from fuzzy_logic import evaluate_dish
+        from fuzzy_logic import predict_suitability
 
         try:
             # Get inputs
@@ -197,7 +213,9 @@ class DishEvaluator(QMainWindow):
             logic_choice = self.logic_choice.currentIndex() + 1
 
             # Evaluate suitability
-            result = evaluate_dish(taste, spiciness, sweetness, texture, logic_choice)
+            result = predict_suitability(
+                taste, spiciness, sweetness, texture, logic_choice
+            )
             self.check_result.setText(result)
         except ValueError:
             QMessageBox.critical(
