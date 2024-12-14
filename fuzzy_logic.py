@@ -1,5 +1,7 @@
 import math
 
+import pandas as pd
+
 
 # Triangular Membership Function
 def triangular_mf(x, a, b, c):
@@ -7,19 +9,19 @@ def triangular_mf(x, a, b, c):
     # 1 if x==b
     if b == c:  # Avoid division by zero
         return max(0, min((x - a) / (b - a), 0))
-    return max(0, min((x - a) / (b - a), (c - x) / (c - b)))
+    return float(max(0, min((x - a) / (b - a), (c - x) / (c - b))))
 
 
 # Trapezoidal Membership Function
 # 0 if x<=a || x>=d
 # 1 if b<=x<=c
 def trapezoidal_mf(x, a, b, c, d):
-    return max(0, min((x - a) / (b - a), 1, (d - x) / (d - c)))
+    return float(max(0, min((x - a) / (b - a), 1, (d - x) / (d - c))))
 
 
 # Gaussian Membership Function
 def gaussian_mf(x, mean, sigma):
-    return math.exp(-((x - mean) ** 2) / (2 * sigma**2))
+    return float(math.exp(-((x - mean) ** 2) / (2 * sigma**2)))
 
 
 def evaluate_character(character, value, logic_choice):
@@ -31,6 +33,7 @@ def evaluate_character(character, value, logic_choice):
         texture: float (0-10)
         logic_choice: int (1, 2, or 3)
     """
+    value = float(value)
     result = 0
     match (logic_choice):
         case 1:
@@ -69,8 +72,36 @@ def evaluate_character(character, value, logic_choice):
     return result
 
 
+def evaluate_dish_from_dataset(file_path, dish_name, logic_choice):
+    # Load dataset
+    df = (
+        pd.read_excel(file_path)
+        if file_path.endswith(".xlsx")
+        else pd.read_csv(file_path)
+    )
+
+    # Find the selected dish
+    dish = df[df["Name"] == dish_name].iloc[0]
+
+    # Extract characteristics
+    taste = dish["Taste"]
+    spiciness = dish["Spiciness"]
+    sweetness = dish["Sweetness"]
+    texture = dish["Texture"]
+    print(taste, spiciness, sweetness, texture)
+
+    taste_score = evaluate_character("taste", taste, logic_choice)
+    spiciness_score = evaluate_character("spiciness", spiciness, logic_choice)
+    sweetness_score = evaluate_character("sweetness", sweetness, logic_choice)
+    texture_score = evaluate_character("texture", texture, logic_choice)
+
+    return taste_score, spiciness_score, sweetness_score, texture_score
+
+
 # Evaluate Dish Based on Selected Logic
-def predict_suitability(taste, spiciness, sweetness, texture, logic_choice):
+def predict_suitability(
+    taste, spiciness, sweetness, texture, logic_choice, ispredict=False
+):
     """
     Evaluates dish suitability based on the selected logic.
     Returns:
@@ -96,4 +127,4 @@ def predict_suitability(taste, spiciness, sweetness, texture, logic_choice):
         f"Sweetness = {sweetness_score:.2f}\nTexture = {texture_score:.2f}\n"
         f"Suitability Score = {suitability:.2f}"
     )
-    return details
+    return details if not ispredict else suitability

@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QTabWidget,
     QFormLayout,
     QLineEdit,
@@ -21,6 +22,8 @@ from PyQt6.QtWidgets import (
 
 # openpyxl load, read, write and save Excel files here (does not support .xls files, only .xlsx)
 from openpyxl import Workbook, load_workbook
+
+from fuzzy_logic import evaluate_dish_from_dataset
 
 EXCEL_FILE = "turkish_dishes.xlsx"
 CSV_FILE = "turkish_dishes.csv"
@@ -78,8 +81,10 @@ class DishEvaluator(QMainWindow):
         self.tabs = QTabWidget()
         self.tab_add = QWidget()
         self.tab_check = QWidget()
+        self.tab_evaluate = QWidget()
         self.tabs.addTab(self.tab_add, "Add Dish")
         self.tabs.addTab(self.tab_check, "Check Suitability")
+        self.tabs.addTab(self.tab_evaluate, "Evaluate Dishes")
 
         # QVBoxLayout sets the top-level layout for parent. There can be only one tll for a widget
         main_layout = QVBoxLayout(central_widget)
@@ -89,6 +94,9 @@ class DishEvaluator(QMainWindow):
         self.setup_add_tab()
         # Tab 2: Check Suitability
         self.setup_check_tab()
+
+        # Tab 3: Evaluate Dishes
+        self.setup_evaluate_tab()
 
         self.apply_styles()
 
@@ -113,16 +121,98 @@ class DishEvaluator(QMainWindow):
         layout.addRow(self.add_button)
         self.tab_add.setLayout(layout)
 
-    # def setup_check_tab(self):
-    #     layout = QVBoxLayout()
+    def evaluate_dish(self):
+        try:
+            dish_name = self.dish_selector.currentText()
+            logic_choice = self.evaluate_logic_choice.currentIndex() + 1
 
-    #     self.custom_button = QPushButton("Custom Dish Check")
-    #     self.savedDish_button = QPushButton("Saved in DB Dish Check")
-    #     self.custom_button.clicked.connect(self.setup_custom_check_tab)
-    #     self.savedDish_button.clicked.connect(self.setup_custom_check_tab)
+            # Get membership values
+            taste_score, spiciness_score, sweetness_score, texture_score = (
+                evaluate_dish_from_dataset(EXCEL_FILE, dish_name, logic_choice)
+            )
 
-    def setup_savedDish_check_tab(self):
+            # Update individual membership values
+            self.taste_value.setText(
+                f"Taste Membership Value: {float(taste_score):.2f}"
+            )
+            self.spiciness_value.setText(
+                f"Spiciness Membership Value: {float(spiciness_score):.2f}"
+            )
+            self.sweetness_value.setText(
+                f"Sweetness Membership Value: {float(sweetness_score):.2f}"
+            )
+            self.texture_value.setText(
+                f"Texture Membership Value: {float(texture_score):.2f}"
+            )
+
+            # Calculate suitability using fuzzy inference
+            suitability = self.fuzzy_inference(
+                taste_score,
+                spiciness_score,
+                sweetness_score,
+                texture_score,
+                logic_choice,
+            )
+            self.evaluate_result.setText(f"Suitability Score: {suitability:.2f}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to evaluate dish: {e}")
+
+    def setup_evaluate_tab(self):
         layout = QVBoxLayout()
+
+        # Dish Selection Dropdown
+        self.dish_selector = QComboBox()
+        self.load_dishes()
+
+        # Membership Function Dropdown
+        self.evaluate_logic_choice = QComboBox()
+        self.evaluate_logic_choice.addItem("Logic 1: Triangular")
+        self.evaluate_logic_choice.addItem("Logic 2: Trapezoidal")
+        self.evaluate_logic_choice.addItem("Logic 3: Gaussian")
+
+        # Evaluate Button
+        self.evaluate_button = QPushButton("Evaluate Dish")
+        self.evaluate_button.clicked.connect(self.evaluate_dish)
+
+        # Labels for individual membership results
+        self.taste_value = QLabel("Taste Membership Value: N/A")
+        self.spiciness_value = QLabel("Spiciness Membership Value: N/A")
+        self.sweetness_value = QLabel("Sweetness Membership Value: N/A")
+        self.texture_value = QLabel("Texture Membership Value: N/A")
+        self.evaluate_result = QLabel("Suitability Score: N/A")
+
+        # Add Widgets to Layout
+        x = QHBoxLayout()
+        x.addWidget(QLabel("Select Dish:"))
+        x.addWidget(self.dish_selector)
+
+        y = QHBoxLayout()
+        y.addWidget(QLabel("Select Membership Function:"))
+        y.addWidget(self.evaluate_logic_choice)
+
+        layout.addLayout(x)
+        layout.addLayout(y)
+        layout.addWidget(self.evaluate_button)
+        layout.addWidget(self.taste_value)
+        layout.addWidget(self.spiciness_value)
+        layout.addWidget(self.sweetness_value)
+        layout.addWidget(self.texture_value)
+        layout.addWidget(self.evaluate_result)
+
+        self.tab_evaluate.setLayout(layout)
+
+    def load_dishes(self):
+        """Load dishes from the dataset into the dropdown."""
+        try:
+            df = (
+                pd.read_excel(EXCEL_FILE)
+                if EXCEL_FILE.endswith(".xlsx")
+                else pd.read_csv(CSV_FILE)
+            )
+            self.dish_selector.clear()
+            self.dish_selector.addItems(df["Name"].tolist())
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load dishes: {e}")
 
     def setup_check_tab(self):
         layout = QFormLayout()
@@ -131,7 +221,7 @@ class DishEvaluator(QMainWindow):
         self.custom_button = QPushButton("Custom Dish Check")
         self.savedDish_button = QPushButton("Saved in DB Dish Check")
         self.custom_button.clicked.connect(self.setup_check_tab)
-        self.savedDish_button.clicked.connect(self.setup_savedDish_check_tab)
+        self.savedDish_button.clicked.connect(self.setup_evaluate_tab)
         self.check_taste = QLineEdit()
         self.check_spiciness = QLineEdit()
         self.check_sweetness = QLineEdit()
@@ -192,7 +282,7 @@ class DishEvaluator(QMainWindow):
                 # Update CSV after 10 dishes
                 wb = load_workbook(EXCEL_FILE)
                 ws = wb.active
-                if len(ws["A"]) % 10 == 0:  # Check if 10 dishes are added
+                if len(ws["A"]) % 2 == 0:  # Check if 10 dishes are added
                     convert_to_csv()
             else:
                 QMessageBox.critical(self, "Error", "Failed to add dish.")
@@ -221,6 +311,23 @@ class DishEvaluator(QMainWindow):
             QMessageBox.critical(
                 self, "Error", "Enter valid numbers within the specified ranges!"
             )
+
+    def fuzzy_inference(
+        self, taste_score, spiciness_score, sweetness_score, texture_score, logic_choice
+    ):
+        from fuzzy_logic import predict_suitability
+
+        # Get inputs
+        taste = float(taste_score)
+        spiciness = float(spiciness_score)
+        sweetness = float(sweetness_score)
+        texture = float(texture_score)
+
+        # Evaluate suitability
+        result = predict_suitability(
+            taste, spiciness, sweetness, texture, logic_choice, ispredict=True
+        )
+        return float(result)
 
     def apply_styles(self):
         # Applies custom CSS-like styling using Qt Style Sheets (QSS)
