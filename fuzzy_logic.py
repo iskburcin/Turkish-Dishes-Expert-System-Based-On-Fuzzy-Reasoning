@@ -72,6 +72,16 @@ def evaluate_character(character, value, logic_choice):
     return result
 
 
+def get_string_score(score):
+    """Returns a human-readable description of the score."""
+    if score < 0.4:
+        return "Low"
+    elif 0.4 <= score < 0.7:
+        return "Modarete"
+    else:
+        return "Yummy"
+
+
 def print_table(data, headers):
     from tabulate import tabulate
 
@@ -86,12 +96,15 @@ def print_table(data, headers):
     table += separator + "\n"
 
     for row in data:
-        if row == data[0]:
-            row_data = "| " + ("\t\t | ".join(map(str, row))) + " |"
+        if row[0] == "Taste":
+            row_data = "| " + str(row[0]) + "\t\t"
+            row_data += "| " + str(row[1]) + "\t"
+            row_data += "| " + str(row[2]) + "\t"
+            row_data += "| " + str(row[3]) + " |"
         else:
             row_data = "| " + "\t | ".join(map(str, row)) + " |"
         table += row_data + "\n"
-        table += separator + "\n"
+        table += "-" * len(row_data) + "\n"
     return table
 
 
@@ -138,13 +151,32 @@ def calculateScores(data, logic_choice, wantValues=False):
 
     details = print_table(
         [
-            ["Taste", data[0], taste_score],
-            ["Spiciness", data[1], spiciness_score],
-            ["Sweetness", data[2], sweetness_score],
-            ["Texture", data[3], texture_score],
+            ["Taste", data[0], round(taste_score, 2), get_string_score(taste_score)],
+            [
+                "Spiciness",
+                data[1],
+                round(spiciness_score, 2),
+                get_string_score(spiciness_score),
+            ],
+            [
+                "Sweetness",
+                data[2],
+                round(sweetness_score, 2),
+                get_string_score(sweetness_score),
+            ],
+            [
+                "Texture",
+                data[3],
+                round(texture_score, 2),
+                get_string_score(texture_score),
+            ],
         ],
         headers=["Feature", "User Votes", "MF Scores"],
     )
+
+    suitability = (taste_score + spiciness_score + sweetness_score + texture_score) / 4
+    isSuit = get_string_score(suitability)
+    details += f"\nSuitibility value: {round(suitability,2)} so, it is {isSuit}"
 
     return (
         [taste_score, spiciness_score, sweetness_score, texture_score]
