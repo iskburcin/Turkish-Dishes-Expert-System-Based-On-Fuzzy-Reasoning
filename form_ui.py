@@ -83,8 +83,8 @@ class DishEvaluator(QMainWindow):
         self.tab_check = QWidget()
         self.tab_evaluate = QWidget()
         self.tabs.addTab(self.tab_add, "Add Dish")
-        self.tabs.addTab(self.tab_check, "Check Suitability")
-        self.tabs.addTab(self.tab_evaluate, "Evaluate Dishes")
+        self.tabs.addTab(self.tab_check, "Check Custom Dish")
+        self.tabs.addTab(self.tab_evaluate, "Check DB Dishes")
 
         # QVBoxLayout sets the top-level layout for parent. There can be only one tll for a widget
         main_layout = QVBoxLayout(central_widget)
@@ -127,33 +127,31 @@ class DishEvaluator(QMainWindow):
             logic_choice = self.evaluate_logic_choice.currentIndex() + 1
 
             # Get membership values
-            taste_score, spiciness_score, sweetness_score, texture_score = (
-                evaluate_dish_from_dataset(EXCEL_FILE, dish_name, logic_choice)
-            )
 
-            # Update individual membership values
-            self.taste_value.setText(
-                f"Taste Membership Value: {float(taste_score):.2f}"
-            )
-            self.spiciness_value.setText(
-                f"Spiciness Membership Value: {float(spiciness_score):.2f}"
-            )
-            self.sweetness_value.setText(
-                f"Sweetness Membership Value: {float(sweetness_score):.2f}"
-            )
-            self.texture_value.setText(
-                f"Texture Membership Value: {float(texture_score):.2f}"
-            )
+            # # Update individual membership values
+            # self.taste_value.setText(
+            #     f"Taste Membership Value: {float(taste_score):.2f}"
+            # )
+            # self.spiciness_value.setText(
+            #     f"Spiciness Membership Value: {float(spiciness_score):.2f}"
+            # )
+            # self.sweetness_value.setText(
+            #     f"Sweetness Membership Value: {float(sweetness_score):.2f}"
+            # )
+            # self.texture_value.setText(
+            #     f"Texture Membership Value: {float(texture_score):.2f}"
+            # )
 
             # Calculate suitability using fuzzy inference
-            suitability = self.fuzzy_inference(
-                taste_score,
-                spiciness_score,
-                sweetness_score,
-                texture_score,
-                logic_choice,
-            )
-            self.evaluate_result.setText(f"Suitability Score: {suitability:.2f}")
+            # suitability = self.fuzzy_inference(
+            #     taste_score,
+            #     spiciness_score,
+            #     sweetness_score,
+            #     texture_score,
+            #     logic_choice,
+            # )
+            result = evaluate_dish_from_dataset(EXCEL_FILE, dish_name, logic_choice)
+            self.evaluate_result.setText(result)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to evaluate dish: {e}")
 
@@ -171,15 +169,15 @@ class DishEvaluator(QMainWindow):
         self.evaluate_logic_choice.addItem("Logic 3: Gaussian")
 
         # Evaluate Button
-        self.evaluate_button = QPushButton("Evaluate Dish")
+        self.evaluate_button = QPushButton("Get Suitibility")
         self.evaluate_button.clicked.connect(self.evaluate_dish)
 
         # Labels for individual membership results
-        self.taste_value = QLabel("Taste Membership Value: ")
-        self.spiciness_value = QLabel("Spiciness Membership Value: ")
-        self.sweetness_value = QLabel("Sweetness Membership Value: ")
-        self.texture_value = QLabel("Texture Membership Value: ")
-        self.evaluate_result = QLabel("Suitability Score: ")
+        # self.taste_value = QLabel("Taste Membership Value: ")
+        # self.spiciness_value = QLabel("Spiciness Membership Value: ")
+        # self.sweetness_value = QLabel("Sweetness Membership Value: ")
+        # self.texture_value = QLabel("Texture Membership Value: ")
+        self.evaluate_result = QLabel()
 
         # Add Widgets to Layout
         x = QHBoxLayout()
@@ -193,10 +191,10 @@ class DishEvaluator(QMainWindow):
         layout.addLayout(x)
         layout.addLayout(y)
         layout.addWidget(self.evaluate_button)
-        layout.addWidget(self.taste_value)
-        layout.addWidget(self.spiciness_value)
-        layout.addWidget(self.sweetness_value)
-        layout.addWidget(self.texture_value)
+        # layout.addWidget(self.taste_value)
+        # layout.addWidget(self.spiciness_value)
+        # layout.addWidget(self.sweetness_value)
+        # layout.addWidget(self.texture_value)
         layout.addWidget(self.evaluate_result)
 
         self.tab_evaluate.setLayout(layout)
@@ -235,7 +233,7 @@ class DishEvaluator(QMainWindow):
 
         # Button and result label
         self.check_result = QLabel("Result: ")
-        self.check_button = QPushButton("Check Suitability")
+        self.check_button = QPushButton("Get Suitibility")
         self.check_button.clicked.connect(self.check_suitability)
 
         # Add widgets to layout
@@ -287,25 +285,14 @@ class DishEvaluator(QMainWindow):
             )
 
     def check_suitability(self):
-        from fuzzy_logic import predict_suitability
-
-        try:
-            # Get inputs
-            taste = float(self.check_taste.text())
-            spiciness = float(self.check_spiciness.text())
-            sweetness = float(self.check_sweetness.text())
-            texture = float(self.check_texture.text())
-            logic_choice = self.logic_choice.currentIndex() + 1
-
-            # Evaluate suitability
-            result = predict_suitability(
-                taste, spiciness, sweetness, texture, logic_choice
-            )
-            self.check_result.setText(result)
-        except ValueError:
-            QMessageBox.critical(
-                self, "Error", "Enter valid numbers within the specified ranges!"
-            )
+        result = self.fuzzy_inference(
+            float(self.check_taste.text()),
+            float(self.check_spiciness.text()),
+            float(self.check_sweetness.text()),
+            float(self.check_texture.text()),
+            self.logic_choice.currentIndex() + 1,
+        )
+        self.check_result.setText(result)
 
     def fuzzy_inference(
         self, taste_score, spiciness_score, sweetness_score, texture_score, logic_choice
@@ -320,9 +307,9 @@ class DishEvaluator(QMainWindow):
 
         # Evaluate suitability
         result = predict_suitability(
-            taste, spiciness, sweetness, texture, logic_choice, ispredict=True
+            taste, spiciness, sweetness, texture, logic_choice, ispredict=False
         )
-        return float(result)
+        return result
 
     def apply_styles(self):
         # Applies custom CSS-like styling using Qt Style Sheets (QSS)
