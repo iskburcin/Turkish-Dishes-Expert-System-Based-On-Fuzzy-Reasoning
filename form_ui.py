@@ -114,7 +114,7 @@ class DishEvaluator(QMainWindow):
         self.add_button.clicked.connect(self.add_dish)
 
         layout.addRow("Name:", self.add_name)
-        layout.addRow("Taste (15-25):", self.add_taste)
+        layout.addRow("Taste (0-20):", self.add_taste)
         layout.addRow("Spiciness (0-10):", self.add_spiciness)
         layout.addRow("Sweetness (0-10):", self.add_sweetness)
         layout.addRow("Texture (0-10):", self.add_texture)
@@ -175,11 +175,11 @@ class DishEvaluator(QMainWindow):
         self.evaluate_button.clicked.connect(self.evaluate_dish)
 
         # Labels for individual membership results
-        self.taste_value = QLabel("Taste Membership Value: N/A")
-        self.spiciness_value = QLabel("Spiciness Membership Value: N/A")
-        self.sweetness_value = QLabel("Sweetness Membership Value: N/A")
-        self.texture_value = QLabel("Texture Membership Value: N/A")
-        self.evaluate_result = QLabel("Suitability Score: N/A")
+        self.taste_value = QLabel("Taste Membership Value: ")
+        self.spiciness_value = QLabel("Spiciness Membership Value: ")
+        self.sweetness_value = QLabel("Sweetness Membership Value: ")
+        self.texture_value = QLabel("Texture Membership Value: ")
+        self.evaluate_result = QLabel("Suitability Score: ")
 
         # Add Widgets to Layout
         x = QHBoxLayout()
@@ -218,10 +218,6 @@ class DishEvaluator(QMainWindow):
         layout = QFormLayout()
 
         # Input fields for all four characteristics
-        self.custom_button = QPushButton("Custom Dish Check")
-        self.savedDish_button = QPushButton("Saved in DB Dish Check")
-        self.custom_button.clicked.connect(self.setup_check_tab)
-        self.savedDish_button.clicked.connect(self.setup_evaluate_tab)
         self.check_taste = QLineEdit()
         self.check_spiciness = QLineEdit()
         self.check_sweetness = QLineEdit()
@@ -243,7 +239,6 @@ class DishEvaluator(QMainWindow):
         self.check_button.clicked.connect(self.check_suitability)
 
         # Add widgets to layout
-        layout.addRow(self.custom_button, self.savedDish_button)
         layout.addRow("Taste (0-20):", self.check_taste)
         layout.addRow("Spiciness (0-10):", self.check_spiciness)
         layout.addRow("Sweetness (0-10):", self.check_sweetness)
@@ -282,7 +277,7 @@ class DishEvaluator(QMainWindow):
                 # Update CSV after 10 dishes
                 wb = load_workbook(EXCEL_FILE)
                 ws = wb.active
-                if len(ws["A"]) % 2 == 0:  # Check if 10 dishes are added
+                if len(ws["A"]) % 10 == 0:  # Check if 10 dishes are added
                     convert_to_csv()
             else:
                 QMessageBox.critical(self, "Error", "Failed to add dish.")

@@ -88,7 +88,6 @@ def evaluate_dish_from_dataset(file_path, dish_name, logic_choice):
     spiciness = dish["Spiciness"]
     sweetness = dish["Sweetness"]
     texture = dish["Texture"]
-    print(taste, spiciness, sweetness, texture)
 
     taste_score = evaluate_character("taste", taste, logic_choice)
     spiciness_score = evaluate_character("spiciness", spiciness, logic_choice)
