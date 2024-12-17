@@ -72,6 +72,29 @@ def evaluate_character(character, value, logic_choice):
     return result
 
 
+def print_table(data, headers):
+    from tabulate import tabulate
+
+    table = tabulate(data, headers=headers, tablefmt="grid")
+
+    table = ""
+    # Print the table header
+    header_row = "| " + " | ".join(headers) + " |"
+    separator = "-" * len(header_row)
+    table += separator + "\n"
+    table += header_row + "\n"
+    table += separator + "\n"
+
+    for row in data:
+        if row == data[0]:
+            row_data = "| " + ("\t\t | ".join(map(str, row))) + " |"
+        else:
+            row_data = "| " + "\t | ".join(map(str, row)) + " |"
+        table += row_data + "\n"
+        table += separator + "\n"
+    return table
+
+
 def evaluate_dish_from_dataset(file_path, dish_name, logic_choice):
     # Load dataset
     df = (
@@ -89,41 +112,42 @@ def evaluate_dish_from_dataset(file_path, dish_name, logic_choice):
     sweetness = dish["Sweetness"]
     texture = dish["Texture"]
 
-    taste_score = evaluate_character("taste", taste, logic_choice)
-    spiciness_score = evaluate_character("spiciness", spiciness, logic_choice)
-    sweetness_score = evaluate_character("sweetness", sweetness, logic_choice)
-    texture_score = evaluate_character("texture", texture, logic_choice)
+    details = calculateScores([taste, spiciness, sweetness, texture], logic_choice)
 
-    return taste_score, spiciness_score, sweetness_score, texture_score
+    return details
 
 
 # Evaluate Dish Based on Selected Logic
 def predict_suitability(
     taste, spiciness, sweetness, texture, logic_choice, ispredict=False
 ):
-    """
-    Evaluates dish suitability based on the selected logic.
-    Returns:
-        Suitability score (0.0 to 1.0) with reasoning details.
-    """
-    match logic_choice:
-        case 1:
-            method = "Triangular Membership Function"
-        case 2:
-            method = "Trapezoidal Membership Function"
-        case 3:
-            method = "Gaussian Membership Function"
-    taste_score = evaluate_character("taste", taste, logic_choice)
-    spiciness_score = evaluate_character("spiciness", spiciness, logic_choice)
-    sweetness_score = evaluate_character("sweetness", sweetness, logic_choice)
-    texture_score = evaluate_character("texture", texture, logic_choice)
-
-    # Combine scores using an average
-    suitability = (taste_score + spiciness_score + sweetness_score + texture_score) / 4
-    details = (
-        f"\nMethod: {method}\n"
-        f"Taste = {taste_score:.2f}\nSpiciness = {spiciness_score:.2f}\n"
-        f"Sweetness = {sweetness_score:.2f}\nTexture = {texture_score:.2f}\n"
-        f"Suitability Score = {suitability:.2f}"
+    features = calculateScores(
+        [taste, spiciness, sweetness, texture], logic_choice, True
     )
+    # Combine scores using an average
+    suitability = (features[0] + features[1] + features[2] + features[3]) / 4
+    details = calculateScores([taste, spiciness, sweetness, texture], logic_choice)
     return details if not ispredict else suitability
+
+
+def calculateScores(data, logic_choice, wantValues=False):
+    taste_score = evaluate_character("taste", data[0], logic_choice)
+    spiciness_score = evaluate_character("spiciness", data[1], logic_choice)
+    sweetness_score = evaluate_character("sweetness", data[2], logic_choice)
+    texture_score = evaluate_character("texture", data[3], logic_choice)
+
+    details = print_table(
+        [
+            ["Taste", data[0], taste_score],
+            ["Spiciness", data[1], spiciness_score],
+            ["Sweetness", data[2], sweetness_score],
+            ["Texture", data[3], texture_score],
+        ],
+        headers=["Feature", "User Votes", "MF Scores"],
+    )
+
+    return (
+        [taste_score, spiciness_score, sweetness_score, texture_score]
+        if wantValues
+        else details
+    )
