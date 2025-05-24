@@ -16,6 +16,8 @@ Bu proje, **tat**, **acılık**, **tatlılık** ve **doku** gibi yemek özellikl
 
 ### 🧪 Membership Functions Used / Kullanılan Üyelik Fonksiyonları
 
+<details>
+
 To evaluate food features fuzzily, the project uses three types of **membership functions (MF)**. Each MF determines how much a feature belongs to the concept of "good" or "suitable" within a given range.
 
 <details>
@@ -114,12 +116,16 @@ Peak at 5.5, smooth fade on both sides.
 
 ---
 
+</details>
+
 ---
 
 ## 📊 Evaluation Parameters / Değerlendirme Parametreleri
 
 Each feature has a different acceptable range:
 These values are either entered manually or read from a dataset (Excel/CSV).
+
+![alt text](data/img/image.png)
 
 | Feature / Özellik    | Range / Aralık |
 | -------------------- | -------------- |
@@ -128,7 +134,7 @@ These values are either entered manually or read from a dataset (Excel/CSV).
 | Sweetness / Tatlılık | 0 – 10         |
 | Texture / Doku       | 0 – 10         |
 
-![alt text](image.png)
+---
 
 ## 🖥️ How to Use the Application / Uygulama Nasıl Kullanılır?
 
@@ -249,3 +255,27 @@ Sistem:
 - Özelliklere ait üyelik skorlarını ve genel uygunluk sonucunu gösterir
 
 </details>
+
+### 🖥️ For End Users (No Python Required)
+
+If you just want to use the application without setting up the source code, download the .exe file below:
+
+👉 [Download form_ui.exe](https://github.com/iskburcin/Turkish-Dishes-Expert-System-Based-On-Fuzzy-Reasoning/releases/tag/v1.0.0)
+Just double-click the file to run the app!
+
+### 👩‍💻 For Developers
+
+If you want to explore or modify the source code:
+
+```bash
+git clone https://github.com/iskburcin/Turkish-Dishes-Expert-System-Based-On-Fuzzy-Reasoning.git
+cd ../3.EvaluateTheSuitabilityOfDishesBasedOnFuzzyReasoning
+pip install -r requirements.txt
+python form_ui.py
+```
+
+To build the .exe yourself using PyInstaller:
+
+```bash
+pyinstaller form_ui.spec
+```
