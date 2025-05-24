@@ -24,9 +24,19 @@ from PyQt6.QtWidgets import (
 from openpyxl import Workbook, load_workbook
 
 from fuzzy_logic import evaluate_dish_from_dataset
+import os
 
-EXCEL_FILE = "turkish_dishes.xlsx"
-CSV_FILE = "turkish_dishes.csv"
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS  # path used by PyInstaller
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+EXCEL_FILE = resource_path("data\\turkish_dishes.xlsx")
+CSV_FILE = resource_path("data\\turkish_dishes.csv")
 
 # Also, pandas can read and write Excel files, which can be more efficient and also handle larger datasets better.
 # As, openpyxl doesn’t support multi-threaded operations and appends data directly, which might not be ideal for larger datasets (no automatic data integrity checks).
